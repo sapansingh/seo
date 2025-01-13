@@ -104,79 +104,95 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google AdSense Eligibility Check</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f7fc;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            padding-top: 80px; /* Offset for fixed navbar */
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        .navbar-nav .nav-link {
+            font-size: 1.1em;
         }
         .container {
-            width: 80%;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #fff;
+            max-width: 800px;
+            margin-top: 60px;
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 30px;
+        }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #6c757d;
+        }
+        .form-control {
+            padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            color: #333;
-            text-align: center;
-        }
-        .form-group {
-            display: flex;
-            justify-content: center;
+            border: 2px solid #ced4da;
             margin-bottom: 20px;
+            font-size: 1.1em;
         }
-        input[type="text"] {
-            padding: 12px;
-            width: 60%;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
         }
-        input[type="submit"] {
-            padding: 12px 20px;
-            background-color: #4CAF50;
-            color: white;
+        .btn-primary {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            background-color: #007bff;
             border: none;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-left: 10px;
+            width: 100%;
         }
-        input[type="submit"]:hover {
-            background-color: #45a049;
+        .btn-primary:hover {
+            background-color: #0056b3;
         }
         .result {
-            margin-top: 30px;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-        .result h3 {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            color: <?= $resultColor ?>;
+            font-size: 1.2em;
             text-align: center;
-            color: #333;
+            font-weight: bold;
         }
-        .result .success {
-            color: #28a745;
+        .result strong {
+            font-size: 1.3em;
         }
-        .result .failure {
-            color: #dc3545;
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 1.1em;
+            color: #6c757d;
         }
     </style>
 </head>
 <body>
-
-<div class="container">
+<?php include("nav.php"); ?>
+<div class="container" style="margin-top: 200px;">
     <h2>Google AdSense Eligibility Check</h2>
-    <p style="text-align: center;">Enter the URL of the website you want to check:</p>
+    <p class="text-center">Enter the URL of the website you want to check:</p>
 
     <!-- Form to input the website URL -->
     <form action="" method="POST">
         <div class="form-group">
-            <input type="text" name="website_url" placeholder="Enter website URL (e.g., https://example.com)" value="<?= htmlspecialchars($website_url) ?>" required>
-            <input type="submit" value="Check Eligibility">
+            <input type="text" name="website_url" class="form-control" placeholder="Enter website URL (e.g., https://example.com)" value="<?= htmlspecialchars($website_url) ?>" required>
+        </div>
+        <div class="form-group text-center">
+            <button type="submit" class="btn btn-primary">Check Eligibility</button>
         </div>
     </form>
 
@@ -192,5 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

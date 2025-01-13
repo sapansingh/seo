@@ -253,101 +253,84 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background-color: #f9f9f9;
             font-family: 'Arial', sans-serif;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        h1 {
-            color: #4CAF50;
-        }
-        .card {
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        .chart-container {
-            margin-top: 30px;
-            max-width: 100%;
-            height: 250px;
-        }
-        .table-container {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        table td, table th {
-            word-wrap: break-word;
-            max-width: 200px;
-            overflow: hidden;
-        }
-        .table th {
+            padding-top: 80px; /* Offset for fixed navbar */
             background-color: #f8f9fa;
         }
-        .form-control {
-            border-radius: 8px;
-            padding: 10px;
-        }
-        .btn {
-            border-radius: 8px;
-        }
-        .seo-result {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-        .seo-result h3 {
-            color: #28a745;
-        }
-        .seo-issues {
-            background-color: #f8d7da;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-        }
-        .seo-issues ul {
-            list-style-type: none;
-        }
-        .seo-issues li {
-            margin-bottom: 10px;
-        }
         .navbar {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        .navbar-nav .nav-link {
+            font-size: 1.1em;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 60px;
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+            color: #343a40;
             margin-bottom: 30px;
         }
-        @media (max-width: 768px) {
-            .chart-container {
-                height: 200px;
-            }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #6c757d;
+        }
+        .form-control {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #ced4da;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        .btn-primary {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            background-color: #007bff;
+            border: none;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            color: <?= $resultColor ?>;
+            font-size: 1.2em;
+            text-align: center;
+            font-weight: bold;
+        }
+        .result strong {
+            font-size: 1.3em;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 1.1em;
+            color: #6c757d;
         }
     </style>
 </head>
 <body>
     <!-- Navbar Section -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">SEO Checker</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    <?php include("nav.php"); ?>
     <!-- Main Content -->
-    <div class="container" style="margin-top: 100px;">
+    <div class="container-fluid" style="margin-top: 200px;">
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card p-4 seo-result">

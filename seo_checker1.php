@@ -238,7 +238,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get page load time
     $pageLoadTime = get_page_load_time($url);
 
-    // Check mobile-friendlinesshttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.php
+    // Check mobile-friendliness
+    $mobileFriendly = check_mobile_friendly($url);
 
     // Pass the SEO analysis data to JavaScript for rendering charts
     echo "<script>
