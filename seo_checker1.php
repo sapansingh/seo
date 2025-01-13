@@ -10,11 +10,6 @@ function fetch_page_content($url) {
     return $html;
 }
 
-
-
-
-
-
 function get_meta_tag($html, $name) {
     preg_match('/<meta name="' . $name . '" content="(.*?)"/i', $html, $matches);
     return $matches[1] ?? null;
@@ -22,25 +17,6 @@ function get_meta_tag($html, $name) {
 
 function get_title($html) {
     preg_match("/<title>(.*)<\/title>/i", $html, $matches);
-    return $matches[1] ?? null;
-}
-function get_canonical_tag($html) {
-    preg_match('/<link rel="canonical" href="(.*?)"/i', $html, $matches);
-    return $matches[1] ?? null;
-}
-
-function get_charset($html) {
-    preg_match('/<meta charset="(.*?)"/i', $html, $matches);
-    return $matches[1] ?? null;
-}
-
-function get_author($html) {
-    preg_match('/<meta name="author" content="(.*?)"/i', $html, $matches);
-    return $matches[1] ?? null;
-}
-
-function get_robots($html) {
-    preg_match('/<meta name="robots" content="(.*?)"/i', $html, $matches);
     return $matches[1] ?? null;
 }
 
@@ -58,45 +34,6 @@ function get_image_alt_text($html) {
     return $images;
 }
 
-
-function seo_issues($title, $metaDescription, $metaKeywords, $h1Tags, $imageAltCount, $totalImages) {
-    $issues = [];
-
-    if (empty($title)) {
-        $issues[] = 'Missing or empty title tag. The title tag is important for search engines and users.';
-    }
-
-    if (empty($metaDescription)) {
-        $issues[] = 'Missing meta description. A meta description helps improve click-through rates in search results.';
-    }
-
-    if (empty($metaKeywords)) {
-        $issues[] = 'Missing meta keywords. Although not as important as before, it is still helpful for some search engines.';
-    }
-
-    if (empty($h1Tags)) {
-        $issues[] = 'Missing H1 tags. H1 tags are important for page structure and SEO.';
-    }
-
-    if ($imageAltCount === 0) {
-        $issues[] = 'No images with alt text found. Adding alt text to images improves SEO and accessibility.';
-    }
-
-    if ($totalImages === 0) {
-        $issues[] = 'No images found. Adding relevant images can improve SEO and user experience.';
-    }
-
-    return $issues;
-}
-
-// Get page load time
-function get_page_load_time($url) {
-    $start_time = microtime(true);
-    file_get_contents($url);
-    $end_time = microtime(true);
-    return round($end_time - $start_time, 2);
-}
-
 function get_internal_external_links($html, $base_url) {
     preg_match_all('/<a href="([^"]+)"/i', $html, $matches);
     $links = $matches[1] ?? [];
@@ -104,12 +41,6 @@ function get_internal_external_links($html, $base_url) {
     $external_links = [];
 
     foreach ($links as $link) {
-        // Check if the link is absolute or relative
-        if (parse_url($link, PHP_URL_SCHEME) === null) {
-            // It's a relative link; prepend the base URL
-            $link = rtrim($base_url, '/') . '/' . ltrim($link, '/');
-        }
-
         $parsed_url = parse_url($link);
         if (isset($parsed_url['host']) && $parsed_url['host'] !== parse_url($base_url, PHP_URL_HOST)) {
             $external_links[] = $link;
@@ -120,50 +51,149 @@ function get_internal_external_links($html, $base_url) {
 
     return ['internal' => $internal_links, 'external' => $external_links];
 }
-function check_link_status($url) {
-    // Initialize cURL session
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_NOBODY, true); // We only want the headers, not the body.
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the result.
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Set a timeout.
-    curl_exec($ch);
 
-    // Get the response code
-    $response_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    
-    // Check if curl_exec() returned false (failure)
-    if ($response_code === 0) {
-        curl_close($ch);
-        return 'Request Failed';
+function seo_issues($title, $metaDescription, $metaKeywords, $h1Tags, $imageAltCount, $totalImages, $ogTags, $twitterTags, $canonicalTag) {
+    $issues = [];
+
+    // Check for missing or empty title tag
+    if (empty($title)) {
+        $issues[] = 'Missing or empty title tag. The title tag is important for search engines and users.';
     }
 
-    // Close the cURL session
-    curl_close($ch);
-
-    return $response_code;
-}
-
-
-function check_links($links) {
-    $valid_links = [];
-    $broken_links = [];
-
-    foreach ($links as $link) {
-        $status_code = check_link_status($link);
-        
-        // If status code is 200 or in the 2xx range, consider it valid
-        if ($status_code >= 200 && $status_code < 300) {
-            $valid_links[] = ['url' => $link, 'status_code' => $status_code];
-        } else {
-            // Anything else (e.g., 404, 500) is considered broken
-            $broken_links[] = ['url' => $link, 'status_code' => $status_code];
-        }
+    // Check for missing meta description
+    if (empty($metaDescription)) {
+        $issues[] = 'Missing meta description. A meta description helps improve click-through rates in search results.';
     }
 
-    return ['valid' => $valid_links, 'broken' => $broken_links];
+    // Check for missing meta keywords
+    if (empty($metaKeywords)) {
+        $issues[] = 'Missing meta keywords. Although not as important as before, it is still helpful for some search engines.';
+    }
+
+    // Check for missing H1 tags
+    if (empty($h1Tags)) {
+        $issues[] = 'Missing H1 tags. H1 tags are important for page structure and SEO.';
+    }
+
+    // Check if there are images without alt text
+    if ($imageAltCount === 0) {
+        $issues[] = 'No images with alt text found. Adding alt text to images improves SEO and accessibility.';
+    }
+
+    // Check if no images are found
+    if ($totalImages === 0) {
+        $issues[] = 'No images found. Adding relevant images can improve SEO and user experience.';
+    }
+
+    // Check for missing Open Graph tags
+    if (empty($ogTags['og:title'])) {
+        $issues[] = 'Missing Open Graph title. Open Graph tags help improve social media sharing.';
+    }
+
+    if (empty($ogTags['og:description'])) {
+        $issues[] = 'Missing Open Graph description. It is important for social media sharing.';
+    }
+
+    if (empty($ogTags['og:image'])) {
+        $issues[] = 'Missing Open Graph image. Open Graph images enhance social media sharing.';
+    }
+
+    // Check for missing Twitter card tags
+    if (empty($twitterTags['twitter:card'])) {
+        $issues[] = 'Missing Twitter card tag. It is essential for Twitter sharing optimization.';
+    }
+
+    if (empty($twitterTags['twitter:title'])) {
+        $issues[] = 'Missing Twitter title. It is important for Twitter sharing.';
+    }
+
+    if (empty($twitterTags['twitter:description'])) {
+        $issues[] = 'Missing Twitter description. It is essential for Twitter sharing.';
+    }
+
+    if (empty($twitterTags['twitter:image'])) {
+        $issues[] = 'Missing Twitter image. Adding an image helps in Twitter sharing.';
+    }
+
+    // Check for missing canonical tag
+    if (empty($canonicalTag)) {
+        $issues[] = 'Missing canonical tag. The canonical tag helps avoid duplicate content issues.';
+    }
+
+    return $issues;
+}
+function get_og_tags($html) {
+    $ogTags = [];
+    preg_match('/<meta property="og:title" content="(.*?)"/i', $html, $matches);
+    $ogTags['og:title'] = $matches[1] ?? null;
+
+    preg_match('/<meta property="og:description" content="(.*?)"/i', $html, $matches);
+    $ogTags['og:description'] = $matches[1] ?? null;
+
+    preg_match('/<meta property="og:image" content="(.*?)"/i', $html, $matches);
+    $ogTags['og:image'] = $matches[1] ?? null;
+
+    preg_match('/<meta property="og:url" content="(.*?)"/i', $html, $matches);
+    $ogTags['og:url'] = $matches[1] ?? null;
+
+    preg_match('/<meta property="og:type" content="(.*?)"/i', $html, $matches);
+    $ogTags['og:type'] = $matches[1] ?? null;
+
+    return $ogTags;
 }
 
+function get_twitter_tags($html) {
+    $twitterTags = [];
+    preg_match('/<meta name="twitter:card" content="(.*?)"/i', $html, $matches);
+    $twitterTags['twitter:card'] = $matches[1] ?? null;
 
+    preg_match('/<meta name="twitter:title" content="(.*?)"/i', $html, $matches);
+    $twitterTags['twitter:title'] = $matches[1] ?? null;
+
+    preg_match('/<meta name="twitter:description" content="(.*?)"/i', $html, $matches);
+    $twitterTags['twitter:description'] = $matches[1] ?? null;
+
+    preg_match('/<meta name="twitter:image" content="(.*?)"/i', $html, $matches);
+    $twitterTags['twitter:image'] = $matches[1] ?? null;
+
+    return $twitterTags;
+}
+
+function get_canonical_tag($html) {
+    preg_match('/<link rel="canonical" href="(.*?)"/i', $html, $matches);
+    return $matches[1] ?? null;
+}
+
+// Get page load time
+function get_page_load_time($url) {
+    $start_time = microtime(true);
+    file_get_contents($url);
+    $end_time = microtime(true);
+    return round($end_time - $start_time, 2);
+}
+
+// Check mobile-friendliness via Google API
+function check_mobile_friendly($url) {
+    // Use the Google Mobile-Friendly Test API (you might need an API key)
+    $api_url = "https://searchconsole.googleapis.com/v1/urlTestingTools/mobileFriendlyTest:run?url=" . urlencode($url);
+    $response = file_get_contents($api_url);
+
+    // Check if the response is valid
+    if ($response === false) {
+        return null; // Return null if the request fails
+    }
+
+    // Decode the response JSON
+    $decoded_response = json_decode($response, true);
+
+    // Check if the response contains the necessary key
+    if (isset($decoded_response['mobileFriendliness'])) {
+        return $decoded_response; // Return the full response if it's valid
+    }
+
+    // If mobile-friendliness key isn't present, return null
+    return null;
+}
 
 // Handle the POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -191,6 +221,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $imageAltTexts = get_image_alt_text($html);
     $links = get_internal_external_links($html, $url);
 
+    // Get Open Graph and Twitter tags
+    $ogTags = get_og_tags($html);
+    $twitterTags = get_twitter_tags($html);
+    $canonicalTag = get_canonical_tag($html);
+
     // Prepare chart data
     $internalLinksCount = count($links['internal']);
     $externalLinksCount = count($links['external']);
@@ -198,47 +233,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $totalImages = count($imageAltTexts);
 
     // Check for SEO issues
-    $issues = seo_issues($title, $metaDescription, $metaKeywords, $h1Tags, $imageAltCount, $totalImages);
+    $issues = seo_issues($title, $metaDescription, $metaKeywords, $h1Tags, $imageAltCount, $totalImages, $ogTags, $twitterTags, $canonicalTag);
 
     // Get page load time
     $pageLoadTime = get_page_load_time($url);
 
-    // Check mobile-friendliness
-    $canonical = get_canonical_tag($html);
-    $charset = get_charset($html);
-    $author = get_author($html);
-    $robots = get_robots($html);
-    $internal_links_status = check_links($links['internal']);
-    $external_links_status = check_links($links['external']);
+    // Check mobile-friendlinesshttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.phphttp://192.168.200.224/seo/seo_checker.php
 
     // Pass the SEO analysis data to JavaScript for rendering charts
     echo "<script>
-    var seoData = {
-        title: '$title',
-        metaDescription: '$metaDescription',
-        metaKeywords: '$metaKeywords',
-        h1Tags: " . json_encode($h1Tags) . ",
-        internalLinks: $internalLinksCount,
-        externalLinks: $externalLinksCount,
-        imageAltCount: $imageAltCount,
-        totalImages: $totalImages,
-        canonical: '$canonical',
-        charset: '$charset',
-        author: '$author',
-        robots: '$robots',
-        internalLinksList: " . json_encode($links['internal']) . ",
-        externalLinksList: " . json_encode($links['external']) . ",
-        imageAltTexts: " . json_encode($imageAltTexts) . ",
-        issues: " . json_encode($issues) . ",
-        pageLoadTime: $pageLoadTime,
-          validInternalLinks: " . json_encode($internal_links_status['valid']) . ",
-        brokenInternalLinks: " . json_encode($internal_links_status['broken']) . ",
-        validExternalLinks: " . json_encode($external_links_status['valid']) . ",
-        brokenExternalLinks: " . json_encode($external_links_status['broken']) . "
-       
-    };
-</script>";
+            var seoData = {
+                title: '$title',
+                metaDescription: '$metaDescription',
+                metaKeywords: '$metaKeywords',
+                h1Tags: " . json_encode($h1Tags) . ",
+                internalLinks: $internalLinksCount,
+                externalLinks: $externalLinksCount,
+                imageAltCount: $imageAltCount,
+                totalImages: $totalImages,
+                internalLinksList: " . json_encode($links['internal']) . ",
+                externalLinksList: " . json_encode($links['external']) . ",
+                imageAltTexts: " . json_encode($imageAltTexts) . ",
+                issues: " . json_encode($issues) . ",
+                pageLoadTime: $pageLoadTime,
+                mobileFriendly: " . json_encode($mobileFriendly) . "
+            };
+        </script>";
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -366,24 +388,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Results Section -->
         <?php if ($_SERVER["REQUEST_METHOD"] == "POST"): ?>
         <div class="row mt-5">
-        <div class="col-lg-6 col-md-12">
-        <div class="card p-4 seo-result">
-            <h3>SEO Analysis for: <?php echo htmlspecialchars($url); ?></h3>
-            <p><strong>Title:</strong> <?php echo $title ?: 'No title tag found'; ?></p>
-            <p><strong>Meta Description:</strong> <?php echo $metaDescription ?: 'No meta description found'; ?></p>
-            <p><strong>Meta Keywords:</strong> <?php echo $metaKeywords ?: 'No meta keywords found'; ?></p>
-            <p><strong>H1 Tags:</strong> <?php echo count($h1Tags) ? implode(', ', $h1Tags) : 'No H1 tags found'; ?></p>
-            <p><strong>Canonical:</strong> <?php echo $canonical ?: 'No canonical link tag found'; ?></p>
-            <p><strong>Charset:</strong> <?php echo $charset ?: 'No charset specified'; ?></p>
-            <p><strong>Author:</strong> <?php echo $author ?: 'No author meta tag found'; ?></p>
-            <p><strong>Robots:</strong> <?php echo $robots ?: 'No robots meta tag found'; ?></p>
-            <p><strong>Page Load Time:</strong> <?php echo $pageLoadTime; ?> seconds</p>
-               
-            </p>
-        </div>
-    </div>
-
-    
+            <div class="col-lg-6 col-md-12">
+                <div class="card p-4 seo-result">
+                    <h3>SEO Analysis for: <?php echo htmlspecialchars($url); ?></h3>
+                    <p><strong>Title:</strong> <?php echo $title ?: 'No title tag found'; ?></p>
+                    <p><strong>Meta Description:</strong> <?php echo $metaDescription ?: 'No meta description found'; ?></p>
+                    <p><strong>Meta Keywords:</strong> <?php echo $metaKeywords ?: 'No meta keywords found'; ?></p>
+                    <p><strong>H1 Tags:</strong> <?php echo count($h1Tags) ? implode(', ', $h1Tags) : 'No H1 tags found'; ?></p>
+                    <p><strong>Page Load Time:</strong> <?php echo $pageLoadTime; ?> seconds</p>
+                    <p><strong>Mobile Friendly:</strong> 
+                        <?php 
+                            if ($mobileFriendly && isset($mobileFriendly['mobileFriendliness'])) {
+                                echo ($mobileFriendly['mobileFriendliness'] == 'MOBILE_FRIENDLY') ? 'Yes' : 'No';
+                            } else {
+                                echo 'Could not determine mobile-friendliness';
+                            }
+                        ?>
+                    </p>
+                </div>
+            </div>
             <div class="col-lg-6 col-md-12">
                 <div class="card p-4 seo-result">
                     <h3>SEO Visuals</h3>
@@ -421,112 +444,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </div>
         <?php endif; ?>
-<!-- Results Section -->
-<?php if ($_SERVER["REQUEST_METHOD"] == "POST"): ?>
-    <div class="row mt-5">
-        <div class="col-md-6" style="max-height: 300px; overflow-y: auto;">
-            <div class="card p-4">
-                <h3>Internal Links</h3>
-                <ul>
-                    <?php if (!empty($links['internal'])): ?>
-                        <?php foreach ($links['internal'] as $link): ?>
-                            <li><a href="<?php echo htmlspecialchars($link); ?>" target="_blank"><?php echo htmlspecialchars($link); ?></a></li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li>No internal links found.</li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-
-        <div class="col-md-6" >
-            <div class="card p-4">
-                <h3>External Links</h3>
-                <ul>
-                    <?php if (!empty($links['external'])): ?>
-                        <?php foreach ($links['external'] as $link): ?>
-                            <li><a href="<?php echo htmlspecialchars($link); ?>" target="_blank"><?php echo htmlspecialchars($link); ?></a></li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li>No external links found.</li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-<?php if ($_SERVER["REQUEST_METHOD"] == "POST"): ?>
-    <div class="row mt-5">
-        <!-- Valid Internal Links -->
-        <div class="col-md-6">
-            <div class="card p-4" style="max-height: 300px; overflow-y: auto;">
-                <h3>Valid Internal Links</h3>
-                <ul>
-                    <?php if (!empty($internal_links_status['valid'])): ?>
-                        <?php foreach ($internal_links_status['valid'] as $link): ?>
-                            <li><a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank"><?php echo htmlspecialchars($link['url']); ?> (Status: <?php echo $link['status_code']; ?>)</a></li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li>No valid internal links found.</li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Broken Internal Links -->
-        <div class="col-md-6">
-            <div class="card p-4" style="max-height: 300px; overflow-y: auto;">
-                <h3>Broken Internal Links</h3>
-                <ul>
-                    <?php if (!empty($internal_links_status['broken'])): ?>
-                        <?php foreach ($internal_links_status['broken'] as $link): ?>
-                            <li><a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank"><?php echo htmlspecialchars($link['url']); ?> (Status: <?php echo $link['status_code']; ?>)</a></li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li>No broken internal links found.</li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-5">
-        <!-- Valid External Links -->
-        <div class="col-md-6">
-            <div class="card p-4" style="max-height: 300px; overflow-y: auto;">
-                <h3>Valid External Links</h3>
-                <ul>
-                    <?php if (!empty($external_links_status['valid'])): ?>
-                        <?php foreach ($external_links_status['valid'] as $link): ?>
-                            <li><a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank"><?php echo htmlspecialchars($link['url']); ?> (Status: <?php echo $link['status_code']; ?>)</a></li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li>No valid external links found.</li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Broken External Links -->
-        <div class="col-md-6">
-            <div class="card p-4" style="max-height: 300px; overflow-y: auto;">
-                <h3>Broken External Links</h3>
-                <ul>
-                    <?php if (!empty($external_links_status['broken'])): ?>
-                        <?php foreach ($external_links_status['broken'] as $link): ?>
-                            <li><a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank"><?php echo htmlspecialchars($link['url']); ?> (Status: <?php echo $link['status_code']; ?>)</a></li>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <li>No broken external links found.</li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-
-
-
 
         <!-- Display Images Section -->
         <div class="row mt-5">
