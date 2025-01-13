@@ -82,6 +82,38 @@ function seo_issues($title, $metaDescription, $metaKeywords, $h1Tags, $imageAltC
     return $issues;
 }
 
+// Get page load time
+function get_page_load_time($url) {
+    $start_time = microtime(true);
+    file_get_contents($url);
+    $end_time = microtime(true);
+    return round($end_time - $start_time, 2);
+}
+
+// Check mobile-friendliness via Google API
+function check_mobile_friendly($url) {
+    // Use the Google Mobile-Friendly Test API (you might need an API key)
+    $api_url = "https://searchconsole.googleapis.com/v1/urlTestingTools/mobileFriendlyTest:run?url=" . urlencode($url);
+    $response = file_get_contents($api_url);
+
+    // Check if the response is valid
+    if ($response === false) {
+        return null; // Return null if the request fails
+    }
+
+    // Decode the response JSON
+    $decoded_response = json_decode($response, true);
+
+    // Check if the response contains the necessary key
+    if (isset($decoded_response['mobileFriendliness'])) {
+        return $decoded_response; // Return the full response if it's valid
+    }
+
+    // If mobile-friendliness key isn't present, return null
+    return null;
+}
+
+// Handle the POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the URL from POST request
     $url = filter_var($_POST['url'], FILTER_SANITIZE_URL);
@@ -116,6 +148,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check for SEO issues
     $issues = seo_issues($title, $metaDescription, $metaKeywords, $h1Tags, $imageAltCount, $totalImages);
 
+    // Get page load time
+    $pageLoadTime = get_page_load_time($url);
+
+    // Check mobile-friendliness
+    $mobileFriendly = check_mobile_friendly($url);
+
     // Pass the SEO analysis data to JavaScript for rendering charts
     echo "<script>
             var seoData = {
@@ -130,7 +168,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 internalLinksList: " . json_encode($links['internal']) . ",
                 externalLinksList: " . json_encode($links['external']) . ",
                 imageAltTexts: " . json_encode($imageAltTexts) . ",
-                issues: " . json_encode($issues) . "
+                issues: " . json_encode($issues) . ",
+                pageLoadTime: $pageLoadTime,
+                mobileFriendly: " . json_encode($mobileFriendly) . "
             };
         </script>";
 }
@@ -268,6 +308,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <p><strong>Meta Description:</strong> <?php echo $metaDescription ?: 'No meta description found'; ?></p>
                     <p><strong>Meta Keywords:</strong> <?php echo $metaKeywords ?: 'No meta keywords found'; ?></p>
                     <p><strong>H1 Tags:</strong> <?php echo count($h1Tags) ? implode(', ', $h1Tags) : 'No H1 tags found'; ?></p>
+                    <p><strong>Page Load Time:</strong> <?php echo $pageLoadTime; ?> seconds</p>
+                    <p><strong>Mobile Friendly:</strong> 
+                        <?php 
+                            if ($mobileFriendly && isset($mobileFriendly['mobileFriendliness'])) {
+                                echo ($mobileFriendly['mobileFriendliness'] == 'MOBILE_FRIENDLY') ? 'Yes' : 'No';
+                            } else {
+                                echo 'Could not determine mobile-friendliness';
+                            }
+                        ?>
+                    </p>
                 </div>
             </div>
             <div class="col-lg-6 col-md-12">
